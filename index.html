@@ -249,7 +249,33 @@
       await fetch(DB + "/rooms/" + room + "/messages.json", { method: "POST", body: JSON.stringify({ sender: isReaper ? "reaper" : "mortal", senderName: myName, senderAvatar: myAvatar, text: "", image: imgData, time: time }) });
       sync();
     }
-
+    async function sendChatVideo(e) {
+      const file = e.target.files && e.target.files.item(0);
+      e.target.value = "";
+      if (!file || !room) return;
+      if (file.size > 8 * 1024 * 1024) {
+        alert("Video too large (max 8 MB). Send a shorter clip.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        const d = new Date();
+        const time = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+        await fetch(DB + "/rooms/" + room + "/messages.json", {
+          method: "POST",
+          body: JSON.stringify({
+            sender: isReaper ? "reaper" : "mortal",
+            senderName: myName,
+            senderAvatar: myAvatar,
+            text: "",
+            video: ev.target.result,
+            time: time
+          })
+        });
+        sync();
+      };
+      reader.readAsDataURL(file);
+    }
     async function sendMessage(e) {
       e.preventDefault();
       const input = document.getElementById("msg-input"); const text = input.value.trim();
@@ -328,7 +354,9 @@
               row.className = "msg-row " + m.sender;
               const icon = m.sender === "reaper" ? "💀" : "👤";
               const av = m.senderAvatar ? '<img class="msg-av" src="' + m.senderAvatar + '" />' : '<div class="msg-av">' + icon + '</div>';
-              const bodyHtml = m.image ? '<img src="' + m.image + '" style="max-width:220px;max-height:240px;border-radius:6px;display:block;margin-top:4px;" />' : esc(m.text);
+                            const bodyHtml = m.video
+                ? '<video src="' + m.video + '" controls playsinline style="max-width:230px;max-height:250px;border-radius:6px;display:block;margin-top:4px;"></video>'
+                : (m.image ? '<img src="' + m.image + '" style="max-width:220px;max-height:240px;border-radius:6px;display:block;margin-top:4px;" />' : esc(m.text));
               row.innerHTML = av + '<div class="msg ' + m.sender + '"><div class="msg-meta"><span>' + esc(m.senderName || icon) + '</span><span>' + (m.time || "") + '</span></div><div>' + bodyHtml + '</div></div>';
               area.appendChild(row);
             });
