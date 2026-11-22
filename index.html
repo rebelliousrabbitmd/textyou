@@ -116,6 +116,33 @@
     }
     function closeModal() { document.getElementById("profile-modal").style.display = "none"; }
     if (!isReaper && !myName) openModal();
+        if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    window.addEventListener("focus", () => { document.title = "TextYou // Messenger"; });
+
+    function notifyNewMsg(sender, text) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(620, ctx.currentTime);
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.14);
+      } catch (e) {}
+
+      if (document.hidden) {
+        document.title = "💬 New message! - TextYou";
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("💀 TextYou - " + sender, { body: text });
+        }
+      }
+    }
     if (isReaper) { document.getElementById("auth-btn").textContent = "Exit Reaper"; document.getElementById("rooms-panel").style.display = "block"; }
     function compressImg(file) {
       return new Promise(resolve => {
@@ -218,9 +245,13 @@
         const other = isReaper ? "mortal" : "reaper";
         const typed = (data.typing && data.typing[other]) ? data.typing[other] : 0;
         document.getElementById("typing").textContent = (Date.now() - typed < 3000) ? "Typing..." : "";
-        if (data.messages) {
+                if (data.messages) {
           const list = Object.values(data.messages);
           if (list.length !== lastCount) {
+            const lastMsg = list.at(-1);
+            if (lastCount > 0 && lastMsg && lastMsg.sender === other) {
+              notifyNewMsg(lastMsg.senderName || "New message", lastMsg.text);
+            }
             lastCount = list.length;
             const area = document.getElementById("messages");
             area.innerHTML = "";
