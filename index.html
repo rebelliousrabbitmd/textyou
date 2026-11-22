@@ -269,14 +269,15 @@
       room = ""; lastCount = 0; document.getElementById("messages").innerHTML = ""; sync();
     }
 
-    async function sync() {
+        async function sync() {
       try {
-        const rRes = await fetch(DB + "/reaperProfile.json"); const rData = await rRes.json();
+        const rRes = await fetch(DB + "/reaperProfile.json");
+        const rData = await rRes.json();
         if (rData) {
           document.getElementById("reaper-name").textContent = rData.name || "THE REAPER";
           document.getElementById("reaper-av").innerHTML = (rData.avatar ? '<img src="' + rData.avatar + '" />' : "💀") + '<div class="status-dot"></div>';
         }
-                if (isReaper) {
+        if (isReaper) {
           const allRes = await fetch(DB + "/rooms.json");
           const all = await allRes.json();
           const box = document.getElementById("rooms-container");
@@ -285,22 +286,16 @@
             if (ids.length > 0 && !ids.includes(room)) room = ids.at(0);
             box.innerHTML = "";
             ids.forEach(id => {
-              const rData = all[id] || {};
-              const prof = rData.profile || { name: id, avatar: "" };
-              const msgs = rData.messages ? Object.values(rData.messages) : [];
+              const info = all[id] || {};
+              const prof = info.profile || { name: id, avatar: "" };
+              const msgs = info.messages ? Object.values(info.messages) : [];
               const count = msgs.length;
               const prev = roomCounts[id];
-
               if (prev !== undefined && count > prev && id !== room) {
                 const newest = msgs.at(-1);
-                if (newest && newest.sender === "mortal") {
-                  notifyNewMsg(prof.name || "Soul", newest.text || "📷 Photo");
-                }
+                if (newest && newest.sender === "mortal") notifyNewMsg(prof.name || "Soul", newest.text || "📷 Photo");
               }
-              if (id === room || prev === undefined) {
-                roomCounts[id] = count;
-              }
-
+              if (id === room || prev === undefined) roomCounts[id] = count;
               const hasUnread = count > (roomCounts[id] || 0);
               const badge = hasUnread ? ' <span style="color:var(--pink);font-weight:bold;">●</span>' : '';
               const div = document.createElement("div");
@@ -313,10 +308,9 @@
             box.innerHTML = "<div style='font-size:0.75rem;color:#a699c2;'>No souls yet...</div>";
           }
         }
-          } else { box.innerHTML = "<div style='font-size:0.75rem;color:#a699c2;'>No souls yet...</div>"; }
-        }
         if (!room) return;
-        const res = await fetch(DB + "/rooms/" + room + ".json"); const data = await res.json();
+        const res = await fetch(DB + "/rooms/" + room + ".json");
+        const data = await res.json();
         if (!data) return;
         const other = isReaper ? "mortal" : "reaper";
         const typed = (data.typing && data.typing[other]) ? data.typing[other] : 0;
@@ -327,9 +321,11 @@
             const lastMsg = list.at(-1);
             if (lastCount > 0 && lastMsg && lastMsg.sender === other) notifyNewMsg(lastMsg.senderName || "New message", lastMsg.text || "📷 Photo");
             lastCount = list.length;
-            const area = document.getElementById("messages"); area.innerHTML = "";
+            const area = document.getElementById("messages");
+            area.innerHTML = "";
             list.forEach(m => {
-              const row = document.createElement("div"); row.className = "msg-row " + m.sender;
+              const row = document.createElement("div");
+              row.className = "msg-row " + m.sender;
               const icon = m.sender === "reaper" ? "💀" : "👤";
               const av = m.senderAvatar ? '<img class="msg-av" src="' + m.senderAvatar + '" />' : '<div class="msg-av">' + icon + '</div>';
               const bodyHtml = m.image ? '<img src="' + m.image + '" style="max-width:220px;max-height:240px;border-radius:6px;display:block;margin-top:4px;" />' : esc(m.text);
