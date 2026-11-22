@@ -237,31 +237,31 @@
       });
     }
 
-    async function saveProfile() {
+        async function saveProfile() {
       const nameVal = document.getElementById("profile-name-input").value.trim();
       const fileInput = document.getElementById("profile-file-input");
       if (!nameVal) { alert("Por favor, escribe un nombre."); return; }
 
       myName = nameVal;
-      if (fileInput.files && fileInput.files.at(0)) {
-        myAvatar = await compressImage(fileInput.files.at(0));
-      }
-
-      localStorage.setItem(isReaper ? "reaper_name" : "mortal_name", myName);
-      localStorage.setItem(isReaper ? "reaper_avatar" : "mortal_avatar", myAvatar);
-
-      if (isReaper) {
-        await fetch(`${FIREBASE_URL}/reaperProfile.json`, {
-          method: "PUT",
-          body: JSON.stringify({ name: myName, avatar: myAvatar })
-        });
-      } else {
-        await fetch(`${FIREBASE_URL}/rooms/${currentRoom}/profile.json`, {
-          method: "PUT",
-          body: JSON.stringify({ name: myName, avatar: myAvatar })
-        });
-      }
       document.getElementById("profile-modal").style.display = "none";
+
+      try {
+        if (fileInput.files && fileInput.files.at(0)) {
+          myAvatar = await compressImage(fileInput.files.at(0));
+        }
+
+        localStorage.setItem(isReaper ? "reaper_name" : "mortal_name", myName);
+        localStorage.setItem(isReaper ? "reaper_avatar" : "mortal_avatar", myAvatar);
+
+        const endpoint = isReaper ? `${FIREBASE_URL}/reaperProfile.json` : `${FIREBASE_URL}/rooms/${currentRoom}/profile.json`;
+        await fetch(endpoint, {
+          method: "PUT",
+          body: JSON.stringify({ name: myName, avatar: myAvatar })
+        });
+      } catch (err) {
+        console.error("Error guardando perfil:", err);
+      }
+
       lastMsgCount = 0;
       syncChat();
     }
