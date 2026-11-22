@@ -103,6 +103,8 @@
         <form class="input-area" onsubmit="sendMessage(event)">
           <input type="file" id="chat-img-input" accept="image/*" style="display:none;" onchange="sendChatImage(event)" />
           <button type="button" onclick="document.getElementById('chat-img-input').click()" style="background:#2b2242;color:var(--cyan);border:1px solid var(--border);padding:0 12px;">📷</button>
+                 <input type="file" id="chat-vid-input" accept="video/*" style="display:none;" onchange="sendChatVideo(event)" />
+       <button type="button" onclick="document.getElementById('chat-vid-input').click()" style="background:#2b2242;color:var(--pink);border:1px solid var(--border);padding:0 12px;">🎥</button>
           <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" oninput="notifyTyping()" required />
           <button type="submit">SEND</button>
         </form>
