@@ -55,15 +55,24 @@
 </head>
 <body>
   <div class="os-window">
-    <div class="modal-overlay" id="profile-modal">
+        <div class="modal-overlay" id="profile-modal">
       <div class="modal-box">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <h3 id="modal-title" style="color:var(--pink);font-size:1rem;">YOUR PROFILE</h3>
-          <button type="button" onclick="closeModal()" style="background:none;border:1px solid var(--muted);color:var(--muted);padding:2px 8px;cursor:pointer;">X</button>
+          <h3 id="modal-title" style="color:var(--pink);font-size:1rem;">SOUL ACCESS</h3>
+          <button type="button" id="close-modal-btn" onclick="closeModal()" style="background:none;border:1px solid var(--muted);color:var(--muted);padding:2px 8px;cursor:pointer;">X</button>
         </div>
-        <input type="text" id="name-input" maxlength="20" placeholder="Your name or nickname..." />
-        <input type="file" id="file-input" accept="image/*" />
-        <button type="button" class="save-btn" onclick="saveProfile()">SAVE & ENTER</button>
+        <div id="auth-tabs" style="display:flex;gap:6px;">
+          <button type="button" id="tab-signup" onclick="setAuthMode('signup')" style="flex:1;padding:6px;background:var(--pink);color:#1a1525;border:none;border-radius:4px;font-weight:bold;cursor:pointer;">Sign Up</button>
+          <button type="button" id="tab-signin" onclick="setAuthMode('signin')" style="flex:1;padding:6px;background:#1c1729;color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer;">Sign In</button>
+        </div>
+        <input type="text" id="name-input" maxlength="20" placeholder="Username / Nickname..." />
+        <input type="password" id="pass-input" maxlength="20" placeholder="Password..." />
+        <div id="avatar-picker-wrap">
+          <div style="font-size:0.75rem;color:var(--cyan);margin-bottom:4px;">Profile picture (optional):</div>
+          <input type="file" id="file-input" accept="image/*" />
+        </div>
+        <button type="button" class="save-btn" id="save-btn" onclick="handleAuthSubmit()">CREATE ACCOUNT</button>
+        <button type="button" id="logout-btn" onclick="mortalLogout()" style="display:none;background:none;border:1px solid #e11d48;color:#e11d48;padding:7px;border-radius:6px;cursor:pointer;font-size:0.8rem;">Log Out</button>
       </div>
     </div>
 
@@ -112,13 +121,43 @@
     let myAvatar = localStorage.getItem(isReaper ? "r_av" : "m_av") || "";
     let lastCount = 0;
 
+        let isReaper = localStorage.getItem("is_reaper") === "true";
+    let room = localStorage.getItem("mortal_room") || "";
+    let myName = localStorage.getItem(isReaper ? "r_name" : "m_name") || (isReaper ? "THE REAPER" : "");
+    let myAvatar = localStorage.getItem(isReaper ? "r_av" : "m_av") || "";
+    let authMode = "signup";
+    let lastCount = 0;
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      const isUp = mode === "signup";
+      document.getElementById("tab-signup").style.background = isUp ? "var(--pink)" : "#1c1729";
+      document.getElementById("tab-signup").style.color = isUp ? "#1a1525" : "var(--text)";
+      document.getElementById("tab-signin").style.background = !isUp ? "var(--pink)" : "#1c1729";
+      document.getElementById("tab-signin").style.color = !isUp ? "#1a1525" : "var(--text)";
+      document.getElementById("avatar-picker-wrap").style.display = isUp ? "block" : "none";
+      document.getElementById("save-btn").textContent = isUp ? "SIGN UP & ENTER" : "SIGN IN";
+    }
+
     function openModal() {
-      document.getElementById("modal-title").textContent = isReaper ? "REAPER PROFILE" : "MORTAL PROFILE";
+      const loggedMortal = !isReaper && room && myName;
+      document.getElementById("modal-title").textContent = isReaper ? "REAPER PROFILE" : (loggedMortal ? "EDIT PROFILE" : "SOUL ACCESS");
+      document.getElementById("auth-tabs").style.display = (isReaper || loggedMortal) ? "none" : "flex";
+      document.getElementById("pass-input").style.display = (isReaper || loggedMortal) ? "none" : "block";
+      document.getElementById("avatar-picker-wrap").style.display = (isReaper || loggedMortal || authMode === "signup") ? "block" : "none";
+      document.getElementById("save-btn").textContent = (isReaper || loggedMortal) ? "SAVE CHANGES" : (authMode === "signup" ? "SIGN UP & ENTER" : "SIGN IN");
+      document.getElementById("logout-btn").style.display = loggedMortal ? "block" : "none";
+      document.getElementById("close-modal-btn").style.display = (isReaper || loggedMortal) ? "block" : "none";
       document.getElementById("name-input").value = myName;
       document.getElementById("profile-modal").style.display = "flex";
     }
+
     function closeModal() { document.getElementById("profile-modal").style.display = "none"; }
-    if (!isReaper && !myName) openModal();
+    function mortalLogout() {
+      localStorage.removeItem("mortal_room"); localStorage.removeItem("m_name"); localStorage.removeItem("m_av");
+      location.reload();
+    }
+    if (!isReaper && (!room || !myName)) openModal();
         if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
@@ -168,18 +207,59 @@
       });
     }
 
-    async function saveProfile() {
-      const val = document.getElementById("name-input").value.trim();
-      if (!val) { alert("Please enter a name."); return; }
-      myName = val;
-      closeModal();
+        async function handleAuthSubmit() {
+      const rawName = document.getElementById("name-input").value.trim();
+      const passVal = document.getElementById("pass-input").value.trim();
+      if (!rawName) { alert("Please enter a username."); return; }
+
       const files = document.getElementById("file-input").files;
-      if (files && files.length > 0) myAvatar = await compressImg(files.item(0));
-      localStorage.setItem(isReaper ? "r_name" : "m_name", myName);
-      localStorage.setItem(isReaper ? "r_av" : "m_av", myAvatar);
-      const url = isReaper ? DB + "/reaperProfile.json" : DB + "/rooms/" + room + "/profile.json";
-      await fetch(url, { method: "PUT", body: JSON.stringify({ name: myName, avatar: myAvatar }) });
-      lastCount = 0; sync();
+      const loggedMortal = !isReaper && room && myName;
+
+      // Caso 1: Reaper o Mortal ya logueado editando nombre/foto
+      if (isReaper || loggedMortal) {
+        myName = rawName;
+        closeModal();
+        if (files && files.length > 0) myAvatar = await compressImg(files.item(0));
+        localStorage.setItem(isReaper ? "r_name" : "m_name", myName);
+        localStorage.setItem(isReaper ? "r_av" : "m_av", myAvatar);
+        const url = isReaper ? DB + "/reaperProfile.json" : DB + "/rooms/" + room + "/profile.json";
+        await fetch(url, { method: "PUT", body: JSON.stringify({ name: myName, avatar: myAvatar }) });
+        lastCount = 0; sync(); return;
+      }
+
+      // Caso 2: Sign Up / Sign In de visitante
+      if (!passVal) { alert("Please enter a password."); return; }
+      const userKey = rawName.toLowerCase().replace(/[^a-z0-9_]/g, "");
+      if (!userKey) { alert("Use letters or numbers for your username."); return; }
+
+      const accRes = await fetch(DB + "/accounts/" + userKey + ".json");
+      const accData = await accRes.json();
+
+      if (authMode === "signup") {
+        if (accData) { alert("That username is already taken. Use Sign In or pick another."); return; }
+        myName = rawName;
+        room = "soul_" + userKey;
+        if (files && files.length > 0) myAvatar = await compressImg(files.item(0));
+        await fetch(DB + "/accounts/" + userKey + ".json", {
+          method: "PUT", body: JSON.stringify({ name: myName, pass: passVal, room: room, avatar: myAvatar })
+        });
+        await fetch(DB + "/rooms/" + room + "/profile.json", {
+          method: "PUT", body: JSON.stringify({ name: myName, avatar: myAvatar })
+        });
+      } else {
+        if (!accData || accData.pass !== passVal) { alert("Wrong username or password."); return; }
+        myName = accData.name;
+        room = accData.room;
+        myAvatar = accData.avatar || "";
+      }
+
+      localStorage.setItem("mortal_room", room);
+      localStorage.setItem("m_name", myName);
+      localStorage.setItem("m_av", myAvatar);
+      closeModal();
+      lastCount = 0;
+      document.getElementById("messages").innerHTML = "";
+      sync();
     }
 
     function toggleReaper() {
