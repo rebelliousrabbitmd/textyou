@@ -249,14 +249,15 @@
       await fetch(DB + "/rooms/" + room + "/messages.json", { method: "POST", body: JSON.stringify({ sender: isReaper ? "reaper" : "mortal", senderName: myName, senderAvatar: myAvatar, text: "", image: imgData, time: time }) });
       sync();
     }
-    async function sendChatVideo(e) {
+        async function sendChatVideo(e) {
       const file = e.target.files && e.target.files.item(0);
-      e.target.value = "";
       if (!file || !room) return;
-      if (file.size > 8 * 1024 * 1024) {
-        alert("Video too large (max 8 MB). Send a shorter clip.");
+      if (file.size > 6 * 1024 * 1024) {
+        e.target.value = "";
+        alert("Video too large (max 6 MB). Send a shorter clip.");
         return;
       }
+      document.getElementById("typing").textContent = "Sending video... ⏳";
       const reader = new FileReader();
       reader.onload = async ev => {
         const d = new Date();
@@ -272,6 +273,8 @@
             time: time
           })
         });
+        document.getElementById("typing").textContent = "";
+        e.target.value = "";
         sync();
       };
       reader.readAsDataURL(file);
