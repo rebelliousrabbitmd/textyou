@@ -34,7 +34,7 @@
     .msg-meta { font-size:0.68rem; opacity:0.75; margin-bottom:4px; display:flex; justify-content:space-between; gap:10px; }
     .typing-bar { height:20px; padding:0 14px; font-size:0.75rem; color:var(--cyan); font-style:italic; flex-shrink:0; }
     .input-area { border-top:2px solid #3c2e5c; background:#1c1729; padding:10px; display:flex; gap:8px; flex-shrink:0; }
-    .input-area input { flex:1; min-width:0; background:#2b2242; border:1px solid var(--border); color:var(--text); padding:10px; border-radius:6px; outline:none; font-size:16px; }
+    .input-area input[type="text"] { flex:1; min-width:0; background:#2b2242; border:1px solid var(--border); color:var(--text); padding:10px; border-radius:6px; outline:none; font-size:16px; }
     .input-area button { background:var(--pink); color:#1a1525; border:none; padding:0 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex-shrink:0; }
     .modal-overlay { position:absolute; inset:0; background:rgba(15,11,24,0.94); display:none; justify-content:center; align-items:center; z-index:20; padding:16px; }
     .modal-box { background:var(--win); border:2px solid var(--pink); border-radius:10px; padding:18px; width:100%; max-width:350px; display:flex; flex-direction:column; gap:12px; }
@@ -55,7 +55,7 @@
 </head>
 <body>
   <div class="os-window">
-        <div class="modal-overlay" id="profile-modal">
+    <div class="modal-overlay" id="profile-modal">
       <div class="modal-box">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <h3 id="modal-title" style="color:var(--pink);font-size:1rem;">SOUL ACCESS</h3>
@@ -71,7 +71,7 @@
           <div style="font-size:0.75rem;color:var(--cyan);margin-bottom:4px;">Profile picture (optional):</div>
           <input type="file" id="file-input" accept="image/*" />
         </div>
-        <button type="button" class="save-btn" id="save-btn" onclick="handleAuthSubmit()">CREATE ACCOUNT</button>
+        <button type="button" class="save-btn" id="save-btn" onclick="handleAuthSubmit()">SIGN UP & ENTER</button>
         <button type="button" id="logout-btn" onclick="mortalLogout()" style="display:none;background:none;border:1px solid #e11d48;color:#e11d48;padding:7px;border-radius:6px;cursor:pointer;font-size:0.8rem;">Log Out</button>
       </div>
     </div>
@@ -91,7 +91,7 @@
           <div class="char-name" id="reaper-name">THE REAPER</div>
           <div class="char-bio">"Online • Waiting for souls"</div>
         </div>
-                <div class="rooms-list" id="rooms-panel" style="display:none;">
+        <div class="rooms-list" id="rooms-panel" style="display:none;">
           <div style="font-size:0.75rem;color:var(--cyan);margin-bottom:8px;">SOULS:</div>
           <div id="rooms-container"></div>
           <button type="button" onclick="deleteCurrentRoom()" style="width:100%;margin-top:10px;background:#e11d48;color:#fff;border:none;padding:7px;border-radius:6px;font-size:0.75rem;font-weight:bold;cursor:pointer;">🗑️ Delete Chat</button>
@@ -100,9 +100,9 @@
       <section class="chat-section">
         <div class="messages-area" id="messages"></div>
         <div class="typing-bar" id="typing"></div>
-                <form class="input-area" onsubmit="sendMessage(event)">
+        <form class="input-area" onsubmit="sendMessage(event)">
           <input type="file" id="chat-img-input" accept="image/*" style="display:none;" onchange="sendChatImage(event)" />
-          <button type="button" onclick="document.getElementById('chat-img-input').click()" title="Send image" style="background:#2b2242;color:var(--cyan);border:1px solid var(--border);padding:0 12px;">📷</button>
+          <button type="button" onclick="document.getElementById('chat-img-input').click()" style="background:#2b2242;color:var(--cyan);border:1px solid var(--border);padding:0 12px;">📷</button>
           <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" oninput="notifyTyping()" required />
           <button type="submit">SEND</button>
         </form>
@@ -111,23 +111,15 @@
   </div>
 
   <script>
-    const DB = "https://textyoudevereaux-default-rtdb.europe-west1.firebasedatabase.app";
+    const DB = "https://textyoudevereaux-default-rtdb.europe-west1.firebasedatabase.app/";
     const PASS = "Devereaux1111";
 
     let isReaper = localStorage.getItem("is_reaper") === "true";
-    let room = localStorage.getItem("mortal_room");
-    if (!room) { room = "soul_" + Math.random().toString(36).substring(2, 8); localStorage.setItem("mortal_room", room); }
-    let myName = localStorage.getItem(isReaper ? "r_name" : "m_name") || (isReaper ? "THE REAPER" : "");
-    let myAvatar = localStorage.getItem(isReaper ? "r_av" : "m_av") || "";
-    let lastCount = 0;
-
-        let isReaper = localStorage.getItem("is_reaper") === "true";
     let room = localStorage.getItem("mortal_room") || "";
     let myName = localStorage.getItem(isReaper ? "r_name" : "m_name") || (isReaper ? "THE REAPER" : "");
     let myAvatar = localStorage.getItem(isReaper ? "r_av" : "m_av") || "";
     let authMode = "signup";
     let lastCount = 0;
-
     function setAuthMode(mode) {
       authMode = mode;
       const isUp = mode === "signup";
@@ -153,128 +145,28 @@
     }
 
     function closeModal() { document.getElementById("profile-modal").style.display = "none"; }
-    function mortalLogout() {
-      localStorage.removeItem("mortal_room"); localStorage.removeItem("m_name"); localStorage.removeItem("m_av");
-      location.reload();
-    }
+    function mortalLogout() { localStorage.removeItem("mortal_room"); localStorage.removeItem("m_name"); localStorage.removeItem("m_av"); location.reload(); }
     if (!isReaper && (!room || !myName)) openModal();
-        if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
+    if (isReaper) { document.getElementById("auth-btn").textContent = "Exit Reaper"; document.getElementById("rooms-panel").style.display = "block"; }
 
+    if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
     window.addEventListener("focus", () => { document.title = "TextYou // Messenger"; });
 
     function notifyNewMsg(sender, text) {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(620, ctx.currentTime);
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = "sine"; osc.frequency.setValueAtTime(620, ctx.currentTime);
         gain.gain.setValueAtTime(0.06, ctx.currentTime);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.14);
+        osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.14);
       } catch (e) {}
-
       if (document.hidden) {
         document.title = "💬 New message! - TextYou";
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("💀 TextYou - " + sender, { body: text });
-        }
+        if ("Notification" in window && Notification.permission === "granted") new Notification("💀 TextYou - " + sender, { body: text });
       }
     }
-    if (isReaper) { document.getElementById("auth-btn").textContent = "Exit Reaper"; document.getElementById("rooms-panel").style.display = "block"; }
-    function compressImg(file) {
-      return new Promise(resolve => {
-        const timer = setTimeout(() => resolve(""), 2000);
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => {
-            clearTimeout(timer);
-            const c = document.createElement("canvas");
-            c.width = 100; c.height = 100;
-            c.getContext("2d").drawImage(img, 0, 0, 100, 100);
-            resolve(c.toDataURL("image/jpeg", 0.7));
-          };
-          img.onerror = () => { clearTimeout(timer); resolve(""); };
-          img.src = e.target.result;
-        };
-        reader.onerror = () => { clearTimeout(timer); resolve(""); };
-        reader.readAsDataURL(file);
-      });
-    }
 
-        async function handleAuthSubmit() {
-      const rawName = document.getElementById("name-input").value.trim();
-      const passVal = document.getElementById("pass-input").value.trim();
-      if (!rawName) { alert("Please enter a username."); return; }
-
-      const files = document.getElementById("file-input").files;
-      const loggedMortal = !isReaper && room && myName;
-
-      // Caso 1: Reaper o Mortal ya logueado editando nombre/foto
-      if (isReaper || loggedMortal) {
-        myName = rawName;
-        closeModal();
-        if (files && files.length > 0) myAvatar = await compressImg(files.item(0));
-        localStorage.setItem(isReaper ? "r_name" : "m_name", myName);
-        localStorage.setItem(isReaper ? "r_av" : "m_av", myAvatar);
-        const url = isReaper ? DB + "/reaperProfile.json" : DB + "/rooms/" + room + "/profile.json";
-        await fetch(url, { method: "PUT", body: JSON.stringify({ name: myName, avatar: myAvatar }) });
-        lastCount = 0; sync(); return;
-      }
-
-      // Caso 2: Sign Up / Sign In de visitante
-      if (!passVal) { alert("Please enter a password."); return; }
-      const userKey = rawName.toLowerCase().replace(/[^a-z0-9_]/g, "");
-      if (!userKey) { alert("Use letters or numbers for your username."); return; }
-
-      const accRes = await fetch(DB + "/accounts/" + userKey + ".json");
-      const accData = await accRes.json();
-
-      if (authMode === "signup") {
-        if (accData) { alert("That username is already taken. Use Sign In or pick another."); return; }
-        myName = rawName;
-        room = "soul_" + userKey;
-        if (files && files.length > 0) myAvatar = await compressImg(files.item(0));
-        await fetch(DB + "/accounts/" + userKey + ".json", {
-          method: "PUT", body: JSON.stringify({ name: myName, pass: passVal, room: room, avatar: myAvatar })
-        });
-        await fetch(DB + "/rooms/" + room + "/profile.json", {
-          method: "PUT", body: JSON.stringify({ name: myName, avatar: myAvatar })
-        });
-      } else {
-        if (!accData || accData.pass !== passVal) { alert("Wrong username or password."); return; }
-        myName = accData.name;
-        room = accData.room;
-        myAvatar = accData.avatar || "";
-      }
-
-      localStorage.setItem("mortal_room", room);
-      localStorage.setItem("m_name", myName);
-      localStorage.setItem("m_av", myAvatar);
-      closeModal();
-      lastCount = 0;
-      document.getElementById("messages").innerHTML = "";
-      sync();
-    }
-
-    function toggleReaper() {
-      if (isReaper) { localStorage.removeItem("is_reaper"); location.reload(); return; }
-      const p = prompt("Enter Reaper password:");
-      if (p === PASS) { localStorage.setItem("is_reaper", "true"); location.reload(); }
-      else if (p !== null) alert("Wrong password, mortal.");
-    }
-
-    function notifyTyping() {
-      if (!room) return;
-      const role = isReaper ? "reaper" : "mortal";
-      fetch(DB + "/rooms/" + room + "/typing/" + role + ".json", { method: "PUT", body: JSON.stringify(Date.now()) });
-    }
-    function compressChatImg(file) {
+    function compressImg(file, maxSize) {
       return new Promise(resolve => {
         const timer = setTimeout(() => resolve(""), 3000);
         const reader = new FileReader();
@@ -282,13 +174,11 @@
           const img = new Image();
           img.onload = () => {
             clearTimeout(timer);
-            const max = 480;
-            const scale = Math.min(1, max / Math.max(img.width, img.height));
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
             const c = document.createElement("canvas");
-            c.width = img.width * scale;
-            c.height = img.height * scale;
+            c.width = img.width * scale; c.height = img.height * scale;
             c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-            resolve(c.toDataURL("image/jpeg", 0.75));
+            resolve(c.toDataURL("image/jpeg", 0.72));
           };
           img.onerror = () => { clearTimeout(timer); resolve(""); };
           img.src = e.target.result;
@@ -298,70 +188,95 @@
       });
     }
 
-    async function sendChatImage(e) {
-      const file = e.target.files && e.target.files.item(0);
-      e.target.value = "";
-      if (!file || !room) return;
-      const imgData = await compressChatImg(file);
-      if (!imgData) return;
+    async function handleAuthSubmit() {
+      const rawName = document.getElementById("name-input").value.trim();
+      const passVal = document.getElementById("pass-input").value.trim();
+      if (!rawName) { alert("Please enter a username."); return; }
+      const files = document.getElementById("file-input").files;
+      const loggedMortal = !isReaper && room && myName;
 
-      const d = new Date();
-      const time = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-      if (!isReaper) {
-        await fetch(DB + "/rooms/" + room + "/profile.json", { method: "PUT", body: JSON.stringify({ name: myName || "Mortal", avatar: myAvatar }) });
+      if (isReaper || loggedMortal) {
+        myName = rawName; closeModal();
+        if (files && files.length > 0) myAvatar = await compressImg(files.item(0), 110);
+        localStorage.setItem(isReaper ? "r_name" : "m_name", myName);
+        localStorage.setItem(isReaper ? "r_av" : "m_av", myAvatar);
+        const url = isReaper ? DB + "/reaperProfile.json" : DB + "/rooms/" + room + "/profile.json";
+        await fetch(url, { method: "PUT", body: JSON.stringify({ name: myName, avatar: myAvatar }) });
+        lastCount = 0; sync(); return;
       }
-      await fetch(DB + "/rooms/" + room + "/messages.json", {
-        method: "POST",
-        body: JSON.stringify({
-          sender: isReaper ? "reaper" : "mortal",
-          senderName: myName || (isReaper ? "THE REAPER" : "Mortal"),
-          senderAvatar: myAvatar,
-          text: "",
-          image: imgData,
-          time: time
-        })
-      });
+
+      if (!passVal) { alert("Please enter a password."); return; }
+      const userKey = rawName.toLowerCase().replace(/[^a-z0-9_]/g, "");
+      if (!userKey) { alert("Use letters or numbers."); return; }
+
+      const accRes = await fetch(DB + "/accounts/" + userKey + ".json");
+      const accData = await accRes.json();
+
+      if (authMode === "signup") {
+        if (accData) { alert("Username already taken. Use Sign In."); return; }
+        myName = rawName; room = "soul_" + userKey;
+        if (files && files.length > 0) myAvatar = await compressImg(files.item(0), 110);
+        await fetch(DB + "/accounts/" + userKey + ".json", { method: "PUT", body: JSON.stringify({ name: myName, pass: passVal, room: room, avatar: myAvatar }) });
+        await fetch(DB + "/rooms/" + room + "/profile.json", { method: "PUT", body: JSON.stringify({ name: myName, avatar: myAvatar }) });
+      } else {
+        if (!accData || accData.pass !== passVal) { alert("Wrong username or password."); return; }
+        myName = accData.name; room = accData.room; myAvatar = accData.avatar || "";
+      }
+
+      localStorage.setItem("mortal_room", room); localStorage.setItem("m_name", myName); localStorage.setItem("m_av", myAvatar);
+      closeModal(); lastCount = 0; document.getElementById("messages").innerHTML = ""; sync();
+    }
+    function toggleReaper() {
+      if (isReaper) { localStorage.removeItem("is_reaper"); location.reload(); return; }
+      const p = prompt("Enter Reaper password:");
+      if (p === PASS) { localStorage.setItem("is_reaper", "true"); location.reload(); }
+      else if (p !== null) alert("Wrong password.");
+    }
+
+    function notifyTyping() {
+      if (!room) return;
+      const role = isReaper ? "reaper" : "mortal";
+      fetch(DB + "/rooms/" + room + "/typing/" + role + ".json", { method: "PUT", body: JSON.stringify(Date.now()) });
+    }
+
+    async function sendChatImage(e) {
+      const file = e.target.files && e.target.files.item(0); e.target.value = "";
+      if (!file || !room) return;
+      const imgData = await compressImg(file, 480);
+      if (!imgData) return;
+      const d = new Date(); const time = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+      await fetch(DB + "/rooms/" + room + "/messages.json", { method: "POST", body: JSON.stringify({ sender: isReaper ? "reaper" : "mortal", senderName: myName, senderAvatar: myAvatar, text: "", image: imgData, time: time }) });
       sync();
     }
+
     async function sendMessage(e) {
       e.preventDefault();
-      const input = document.getElementById("msg-input");
-      const text = input.value.trim();
+      const input = document.getElementById("msg-input"); const text = input.value.trim();
       if (!text || !room) return;
       input.value = "";
-      const d = new Date();
-      const time = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-      if (!isReaper) {
-        await fetch(DB + "/rooms/" + room + "/profile.json", { method: "PUT", body: JSON.stringify({ name: myName || "Mortal", avatar: myAvatar }) });
-      }
-      await fetch(DB + "/rooms/" + room + "/messages.json", {
-        method: "POST",
-        body: JSON.stringify({ sender: isReaper ? "reaper" : "mortal", senderName: myName || (isReaper ? "THE REAPER" : "Mortal"), senderAvatar: myAvatar, text: text, time: time })
-      });
+      const d = new Date(); const time = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+      if (!isReaper) await fetch(DB + "/rooms/" + room + "/profile.json", { method: "PUT", body: JSON.stringify({ name: myName || "Mortal", avatar: myAvatar }) });
+      await fetch(DB + "/rooms/" + room + "/messages.json", { method: "POST", body: JSON.stringify({ sender: isReaper ? "reaper" : "mortal", senderName: myName, senderAvatar: myAvatar, text: text, time: time }) });
       sync();
     }
 
     function selectRoom(id) { room = id; lastCount = 0; document.getElementById("messages").innerHTML = ""; sync(); }
-  async function deleteCurrentRoom() {
-    if (!isReaper || !room) return;
-    if (!confirm("Delete this soul's chat permanently?")) return;
-    await fetch(DB + "/rooms/" + room + ".json", { method: "DELETE" });
-    room = "";
-    lastCount = 0;
-    document.getElementById("messages").innerHTML = "";
-    sync();
-  }
+    async function deleteCurrentRoom() {
+      if (!isReaper || !room) return;
+      if (!confirm("Delete this soul's chat permanently?")) return;
+      await fetch(DB + "/rooms/" + room + ".json", { method: "DELETE" });
+      room = ""; lastCount = 0; document.getElementById("messages").innerHTML = ""; sync();
+    }
+
     async function sync() {
       try {
-        const rRes = await fetch(DB + "/reaperProfile.json");
-        const rData = await rRes.json();
+        const rRes = await fetch(DB + "/reaperProfile.json"); const rData = await rRes.json();
         if (rData) {
           document.getElementById("reaper-name").textContent = rData.name || "THE REAPER";
           document.getElementById("reaper-av").innerHTML = (rData.avatar ? '<img src="' + rData.avatar + '" />' : "💀") + '<div class="status-dot"></div>';
         }
         if (isReaper) {
-          const allRes = await fetch(DB + "/rooms.json");
-          const all = await allRes.json();
+          const allRes = await fetch(DB + "/rooms.json"); const all = await allRes.json();
           const box = document.getElementById("rooms-container");
           if (all) {
             const ids = Object.keys(all);
@@ -378,28 +293,23 @@
           } else { box.innerHTML = "<div style='font-size:0.75rem;color:#a699c2;'>No souls yet...</div>"; }
         }
         if (!room) return;
-        const res = await fetch(DB + "/rooms/" + room + ".json");
-        const data = await res.json();
+        const res = await fetch(DB + "/rooms/" + room + ".json"); const data = await res.json();
         if (!data) return;
         const other = isReaper ? "mortal" : "reaper";
         const typed = (data.typing && data.typing[other]) ? data.typing[other] : 0;
         document.getElementById("typing").textContent = (Date.now() - typed < 3000) ? "Typing..." : "";
-                if (data.messages) {
+        if (data.messages) {
           const list = Object.values(data.messages);
           if (list.length !== lastCount) {
             const lastMsg = list.at(-1);
-            if (lastCount > 0 && lastMsg && lastMsg.sender === other) {
-              notifyNewMsg(lastMsg.senderName || "New message", lastMsg.text);
-            }
+            if (lastCount > 0 && lastMsg && lastMsg.sender === other) notifyNewMsg(lastMsg.senderName || "New message", lastMsg.text || "📷 Photo");
             lastCount = list.length;
-            const area = document.getElementById("messages");
-            area.innerHTML = "";
+            const area = document.getElementById("messages"); area.innerHTML = "";
             list.forEach(m => {
-              const row = document.createElement("div");
-              row.className = "msg-row " + m.sender;
+              const row = document.createElement("div"); row.className = "msg-row " + m.sender;
               const icon = m.sender === "reaper" ? "💀" : "👤";
               const av = m.senderAvatar ? '<img class="msg-av" src="' + m.senderAvatar + '" />' : '<div class="msg-av">' + icon + '</div>';
-                            const bodyHtml = m.image ? '<img src="' + m.image + '" style="max-width:220px;max-height:240px;border-radius:6px;display:block;margin-top:4px;" />' : esc(m.text);
+              const bodyHtml = m.image ? '<img src="' + m.image + '" style="max-width:220px;max-height:240px;border-radius:6px;display:block;margin-top:4px;" />' : esc(m.text);
               row.innerHTML = av + '<div class="msg ' + m.sender + '"><div class="msg-meta"><span>' + esc(m.senderName || icon) + '</span><span>' + (m.time || "") + '</span></div><div>' + bodyHtml + '</div></div>';
               area.appendChild(row);
             });
