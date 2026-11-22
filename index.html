@@ -120,6 +120,7 @@
     let myAvatar = localStorage.getItem(isReaper ? "r_av" : "m_av") || "";
     let authMode = "signup";
     let lastCount = 0;
+    let roomCounts = {};
     function setAuthMode(mode) {
       authMode = mode;
       const isUp = mode === "signup";
@@ -275,21 +276,43 @@
           document.getElementById("reaper-name").textContent = rData.name || "THE REAPER";
           document.getElementById("reaper-av").innerHTML = (rData.avatar ? '<img src="' + rData.avatar + '" />' : "💀") + '<div class="status-dot"></div>';
         }
-        if (isReaper) {
-          const allRes = await fetch(DB + "/rooms.json"); const all = await allRes.json();
+                if (isReaper) {
+          const allRes = await fetch(DB + "/rooms.json");
+          const all = await allRes.json();
           const box = document.getElementById("rooms-container");
           if (all) {
             const ids = Object.keys(all);
             if (ids.length > 0 && !ids.includes(room)) room = ids.at(0);
             box.innerHTML = "";
             ids.forEach(id => {
-              const prof = (all[id] && all[id].profile) ? all[id].profile : { name: id, avatar: "" };
+              const rData = all[id] || {};
+              const prof = rData.profile || { name: id, avatar: "" };
+              const msgs = rData.messages ? Object.values(rData.messages) : [];
+              const count = msgs.length;
+              const prev = roomCounts[id];
+
+              if (prev !== undefined && count > prev && id !== room) {
+                const newest = msgs.at(-1);
+                if (newest && newest.sender === "mortal") {
+                  notifyNewMsg(prof.name || "Soul", newest.text || "📷 Photo");
+                }
+              }
+              if (id === room || prev === undefined) {
+                roomCounts[id] = count;
+              }
+
+              const hasUnread = count > (roomCounts[id] || 0);
+              const badge = hasUnread ? ' <span style="color:var(--pink);font-weight:bold;">●</span>' : '';
               const div = document.createElement("div");
               div.className = "room-item" + (id === room ? " active" : "");
-              div.innerHTML = (prof.avatar ? '<img class="mini-av" src="' + prof.avatar + '" />' : '<span>👤</span>') + '<span>' + esc(prof.name) + '</span>';
-              div.onclick = () => selectRoom(id);
+              div.innerHTML = (prof.avatar ? '<img class="mini-av" src="' + prof.avatar + '" />' : '<span>👤</span>') + '<span>' + esc(prof.name) + badge + '</span>';
+              div.onclick = () => { roomCounts[id] = count; selectRoom(id); };
               box.appendChild(div);
             });
+          } else {
+            box.innerHTML = "<div style='font-size:0.75rem;color:#a699c2;'>No souls yet...</div>";
+          }
+        }
           } else { box.innerHTML = "<div style='font-size:0.75rem;color:#a699c2;'>No souls yet...</div>"; }
         }
         if (!room) return;
